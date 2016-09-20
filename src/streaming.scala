@@ -40,12 +40,12 @@ object streaming {
     val memes = ssc.sparkContext.textFile("memes")
     val simplememes = memes.map(s => s.toLowerCase()).collect()
     val memesbrodc = ssc.sparkContext.broadcast(simplememes.toSet)
-    val topics = ssc.sparkContext.textFile("channels")
+    val topics = ssc.sparkContext.textFile("../channels")
     val topicbrodc = ssc.sparkContext.broadcast(topics.map(s => (s, 1)).collect().toMap)
     val zkQuorum = "localhost:2181"
     val group = "client"
     print(topicbrodc.value)
-    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Minutes(1), Seconds(5))
+    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Minutes(5), Seconds(10))
 
 
     val message = lines.map(s => (s._1, s._2.toLowerCase()))
@@ -53,7 +53,23 @@ object streaming {
     val totalMemesPrChannel = memelines.map(s => (s._1,1))
       .reduceByKey((c,c1) => c + c1)
     totalMemesPrChannel.print()
-
+    val topchannel = totalMemesPrChannel.reduce((r,r1) => {
+      if (r._2 > r1._2)
+      r
+      else
+        r1
+    })
+    topchannel.print()
+    topchannel.foreachRDD(rdd =>{
+      rdd.foreachPartition(partition => {
+        val producer = new KafkaProducer[String, String](props)
+        partition.foreach(record => {
+          val message = new ProducerRecord[String, String]("hostnew", null, record._1)
+          producer.send(message)
+        })
+        producer.close()
+      })
+    })
     totalMemesPrChannel.foreachRDD(rdd =>{
       rdd.foreachPartition(partition => {
         val producer = new KafkaProducer[String, String](props)
@@ -91,6 +107,7 @@ object streaming {
         else
            t1
         })
+
 
 
 
