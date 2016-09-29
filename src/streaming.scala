@@ -1,7 +1,13 @@
 import java.util.Properties
+import javax.swing.JList
 
 import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
 import org.apache.spark.rdd.RDD
+import org.json4s.JsonAST.{JString, JValue}
+import org.json4s.jackson.Json
+import org.json4s.native.JsonMethods._
+
+import scala.io.Source
 
 /**
   * Created by tord on 08.09.16.
@@ -13,12 +19,11 @@ object streaming {
   import org.apache.spark._
   import org.apache.spark.streaming._
   import org.apache.spark.streaming.kafka._
-
-
-
   def main(args: Array[String]): Unit = {
     val appName = "streamingspark"
     val master = "local[2]"
+
+
 
     val conf = new SparkConf().setAppName(appName).setMaster(master)
     val ssc = new StreamingContext(conf, Seconds(1))
@@ -41,15 +46,18 @@ object streaming {
     val simplememes = memes.map(s => s.toLowerCase()).collect()
     val memesbrodc = ssc.sparkContext.broadcast(simplememes.toSet)
     val topics = ssc.sparkContext.textFile("../channels")
-    val topicbrodc = ssc.sparkContext.broadcast(topics.map(s => (s, 1)).collect().toMap)
+    val topicbrodc = ssc.sparkContext.broadcast(topics.map(s => (s.toLowerCase(), 1)).collect().toMap)
     val zkQuorum = "localhost:2181"
     val group = "client"
+
+
     print(topicbrodc.value)
-    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Minutes(5), Seconds(10))
+    getChannelList(props)
 
-
+    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Seconds(30), Minutes(30))
     val message = lines.map(s => (s._1, s._2.toLowerCase()))
     val memelines = message.filter(msg => msg._2.split(" ").toSet.intersect(memesbrodc.value).nonEmpty)
+
     val totalMemesPrChannel = memelines.map(s => (s._1,1))
       .reduceByKey((c,c1) => c + c1)
     totalMemesPrChannel.print()
@@ -59,7 +67,6 @@ object streaming {
       else
         r1
     })
-    topchannel.print()
     topchannel.foreachRDD(rdd =>{
       rdd.foreachPartition(partition => {
         val producer = new KafkaProducer[String, String](props)
@@ -111,61 +118,33 @@ object streaming {
 
 
 
-    memespresent.print()
+    topchannel.print()
     topmemeprchannel.print()
     ssc.start()
     ssc.awaitTermination()
+
+
   }
-}
 
-    /*
-    val count = words.map(x => (x,1))
-      .reduceByKeyAndWindow(_+_,_-_,Minutes(1),Seconds(3))
+  def getChannelList(props : Properties){
+    val producer = new KafkaProducer[String, String](props)
 
-    val total = count.reduce((t1,t2) => (t1._1, t1._2 + t2._2))
-    val numberTotal = total.reduceByKey((i1,i2) => i1 + i2 )
-    numberTotal.foreachRDD(rdd =>{
-      val i = rdd.take(1)(0)._2
-      val producer = new KafkaProducer[String, String](props)
-      val message = new ProducerRecord[String, String]("twitch_results", null, "total," + i)
+    val fruit: List[String] = List()
+    val json = scala.io.Source.fromURL("https://api.twitch.tv/kraken/streams?client_id=88edxnb08ogpinb3fp9n8cox9nm5u98")
+
+    val parsed = parse(json.mkString)
+    val channels = parsed \\ "channel"
+    val names = channels \\ "display_name"
+    val listofnames = names.children
+
+    listofnames.foreach(s => {
+      print("JOINING " + s.values.toString)
+      val message = new ProducerRecord[String, String]("JoinChannel", null, s.values.toString)
       producer.send(message)
-      producer.close()
+
     })
 
-
-
-    val emotesinchat = count.filter(msg => memesbrodc.value.contains(msg._1)).persist()
-      emotesinchat.reduce((t1,t2) => ("meme", t1._2 + t2._2))
-        .foreachRDD(rdd =>{
-        val i = rdd.take(1)(0)._2
-        val producer = new KafkaProducer[String, String](props)
-        val message = new ProducerRecord[String, String]("twitch_results", null, "totmeme," + i)
-        producer.send(message)
-        producer.close()
-      })
-    //count.print()
-
-    emotesinchat.print()
-    emotesinchat.foreachRDD(rdd =>
-      rdd.foreachPartition{
-        partOfRecords => {
-          val producer = new KafkaProducer[String, String](props)
-          partOfRecords.foreach(record =>  {
-            if (record._2 > 0) {
-              val message = new ProducerRecord[String, String]("twitch_results", null, record._1 +"," +  record._2)
-              producer.send(message)
-
-            }
-        })
-          producer.close()
-        }
-      }
-    )
-
-
-
-
-
-
-*/
+    producer.close()
+  }
+}
 

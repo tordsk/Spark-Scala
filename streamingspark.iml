@@ -82,11 +82,6 @@
     <orderEntry type="library" name="Maven: commons-net:commons-net:2.2" level="project" />
     <orderEntry type="library" name="Maven: org.scala-lang:scala-library:2.11.8" level="project" />
     <orderEntry type="library" name="Maven: org.json4s:json4s-jackson_2.11:3.2.11" level="project" />
-    <orderEntry type="library" name="Maven: org.json4s:json4s-core_2.11:3.2.11" level="project" />
-    <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.11:3.2.11" level="project" />
-    <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.6" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scalap:2.11.0" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang:scala-compiler:2.11.0" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.jersey.core:jersey-client:2.22.2" level="project" />
     <orderEntry type="library" name="Maven: javax.ws.rs:javax.ws.rs-api:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.hk2:hk2-api:2.4.0-b34" level="project" />
@@ -123,7 +118,6 @@
     <orderEntry type="library" name="Maven: net.sf.py4j:py4j:0.10.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-tags_2.11:2.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.scalatest:scalatest_2.11:2.2.6" level="project" />
-    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-xml_2.11:1.0.2" level="project" />
     <orderEntry type="library" name="Maven: org.spark-project.spark:unused:1.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-streaming_2.11:2.0.0" level="project" />
     <orderEntry type="library" name="Maven: org.apache.spark:spark-streaming-kafka-0-8_2.11:2.0.0-preview" level="project" />
@@ -138,5 +132,11 @@
     <orderEntry type="library" name="Maven: junit:junit:3.8.1" level="project" />
     <orderEntry type="library" name="Maven: org.apache.kafka:kafka-clients:0.10.0.1" level="project" />
     <orderEntry type="library" name="Maven: log4j:log4j:1.2.17" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-native_2.11:3.4.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-core_2.11:3.4.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-ast_2.11:3.4.1" level="project" />
+    <orderEntry type="library" name="Maven: org.json4s:json4s-scalap_2.11:3.4.1" level="project" />
+    <orderEntry type="library" name="Maven: com.thoughtworks.paranamer:paranamer:2.8" level="project" />
+    <orderEntry type="library" name="Maven: org.scala-lang.modules:scala-xml_2.11:1.0.5" level="project" />
   </component>
 </module>
