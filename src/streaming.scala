@@ -21,8 +21,14 @@ object streaming {
   import org.apache.spark.streaming.kafka._
   def main(args: Array[String]): Unit = {
     val appName = "streamingspark"
-    val master = "local[2]"
+    val master = "local[4]"
 
+    val json = scala.io.Source.fromURL("https://api.twitch.tv/kraken/streams?client_id=88edxnb08ogpinb3fp9n8cox9nm5u98")
+    val parsed = parse(json.mkString)
+    val channels = parsed \\ "channel"
+    val names = channels \\ "name"
+    val listofnames = names.children
+    val newbotchannelist = listofnames.slice(0,11)
 
 
     val conf = new SparkConf().setAppName(appName).setMaster(master)
@@ -45,16 +51,23 @@ object streaming {
     val memes = ssc.sparkContext.textFile("memes")
     val simplememes = memes.map(s => s.toLowerCase()).collect()
     val memesbrodc = ssc.sparkContext.broadcast(simplememes.toSet)
-    val topics = ssc.sparkContext.textFile("../channels")
-    val topicbrodc = ssc.sparkContext.broadcast(topics.map(s => (s.toLowerCase(), 1)).collect().toMap)
+    var topics = Map[String,Int]()
+
+    for (channel <- newbotchannelist){
+      channel match {
+        case JString(s) => topics += s -> 1
+        case _ => print("ERROR WHILE PARSING CHANNEL STRING")
+      }
+    }
+
+    val topicbrodc = ssc.sparkContext.broadcast(topics)
     val zkQuorum = "localhost:2181"
     val group = "client"
 
 
     print(topicbrodc.value)
-    getChannelList(props)
 
-    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Seconds(30), Minutes(30))
+    val lines = KafkaUtils.createStream(ssc, zkQuorum, group, topicbrodc.value).window(Seconds(30), Minutes(10))
     val message = lines.map(s => (s._1, s._2.toLowerCase()))
     val memelines = message.filter(msg => msg._2.split(" ").toSet.intersect(memesbrodc.value).nonEmpty)
 
@@ -71,7 +84,7 @@ object streaming {
       rdd.foreachPartition(partition => {
         val producer = new KafkaProducer[String, String](props)
         partition.foreach(record => {
-          val message = new ProducerRecord[String, String]("hostnew", null, record._1)
+          val message = new ProducerRecord[String, String]("hostNewChannel", null, record._1)
           producer.send(message)
         })
         producer.close()
@@ -126,25 +139,6 @@ object streaming {
 
   }
 
-  def getChannelList(props : Properties){
-    val producer = new KafkaProducer[String, String](props)
 
-    val fruit: List[String] = List()
-    val json = scala.io.Source.fromURL("https://api.twitch.tv/kraken/streams?client_id=88edxnb08ogpinb3fp9n8cox9nm5u98")
-
-    val parsed = parse(json.mkString)
-    val channels = parsed \\ "channel"
-    val names = channels \\ "display_name"
-    val listofnames = names.children
-
-    listofnames.foreach(s => {
-      print("JOINING " + s.values.toString)
-      val message = new ProducerRecord[String, String]("JoinChannel", null, s.values.toString)
-      producer.send(message)
-
-    })
-
-    producer.close()
-  }
 }
 
